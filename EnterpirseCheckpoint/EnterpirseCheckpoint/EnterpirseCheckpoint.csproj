@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="8.0.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.0.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EnterpirseCheckpoint.Utilities\EnterpirseCheckpoint.Utilities.csproj" />
+    <ProjectReference Include="..\Enterprise.Checkpoint.Interfaces\Enterprise.Checkpoint.Interfaces.csproj" />
+    <ProjectReference Include="..\EnterpriseCheckpoint.Models\EnterpriseCheckpoint.Models.csproj" />
+    <ProjectReference Include="..\EnterpriseCheckpoint.Services\EnterpriseCheckpoint.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Views\ScheduleView.axaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\EditSalaryRateView.axaml.cs">
+      <DependentUpon>EditSalaryRateView.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Views\SalaryView.axaml.cs">
+      <DependentUpon>SalaryView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+</Project>

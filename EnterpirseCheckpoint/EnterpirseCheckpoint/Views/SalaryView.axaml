@@ -1,0 +1,34 @@
+<UserControl x:Class="EnterpirseCheckpoint.Views.SalaryView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:EnterpirseCheckpoint.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:EnterpirseCheckpoint.ViewModels"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             x:DataType="vm:SalaryViewModel"
+             Loaded="UserControl_Loaded"
+             mc:Ignorable="d">
+    <DataGrid ItemsSource="{Binding Employees}"
+              Height="300"
+              CanUserReorderColumns="True"
+              CanUserResizeColumns="True"
+              DoubleTapped="DataGrid_DoubleTapped"
+              IsReadOnly="True"
+              >
+        <DataGrid.Columns>
+            <DataGridTextColumn Header="Ім'я"
+                                Binding="{Binding Name}"
+                                IsReadOnly="True" />
+            <DataGridTextColumn Header="Прізвище"
+                                Binding="{Binding Surname}" />
+            <DataGridTextColumn Header="Роль"
+                                Binding="{Binding Role}" />
+            <DataGridTextColumn Header="Ставка співробітника"
+                                Binding="{Binding SalaryRate}" />
+            <DataGridTextColumn Header="Нараховано за ставкою"
+                                Binding="{Binding Salary}" />
+        </DataGrid.Columns>
+    </DataGrid>
+</UserControl>
