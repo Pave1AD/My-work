@@ -1,0 +1,51 @@
+import json
+import base64
+
+base64string = ""
+
+with open("base.txt", "r") as f:
+    base64string = f.read()
+
+jsonstring = json.loads(base64.b64decode(base64string).decode("utf-8"))
+
+globalresult = ""
+count = 1
+
+for i in jsonstring["d"]["sl"]["g"]:
+    questions = i["S"]
+
+    result = ""
+
+    for i in questions:
+        result += str(count) + ". " + i["D"]["d"][0] + "\n"
+        if i["tp"] == "MultipleResponse" or i["tp"] == "MultipleChoice":
+            for j in i["C"]["chs"]:
+                result += "\t"
+                if j["c"]:
+                    result += "+ "
+                else:
+                    result += "- "
+                result +=  j["t"]["d"][0] + "\n" if len(j["t"]["d"]) != 0 else "Тут, напевно картинка"
+        elif i["tp"] == "Matching":
+            for j in i["C"]["m"]:
+                result += "\t"
+                result += " ".join(j["p"]["t"]["d"]) + " - " + " ".join(j["r"]["t"]["d"]) + "\n"
+        elif i["tp"] == "Numeric":
+            result += "\t" + str(i["C"]["na"][0]["op"]) + "\n"
+        elif i["tp"] == "TypeIn":
+            result += "\tМожна написати одним з варіантів:\n\t"
+            result += ", ".join(list(map(lambda x: x["t"], i["C"]["chs"]))) + "\n"
+        elif i["tp"] == "TrueFalse":
+            for j in i["C"]["chs"]:
+                result += "\t"
+                if j["c"]:
+                    result += "+ "
+                else:
+                    result += "- "
+                result += j["t"]["d"][0] + "\n"
+        result += "\n"
+        count += 1
+    globalresult += result
+
+with open("decoded.txt", "w", encoding="utf-8") as f:
+    f.write(globalresult)
