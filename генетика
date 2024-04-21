@@ -1,0 +1,79 @@
+
+def reverse_trascription(rna):
+    rna_to_dna = {"A":"T","G":"C","C":"G","U":"A", "-":"-"}
+
+    dna = ""
+    for i in rna:
+        dna += rna_to_dna[i]
+
+    return dna
+
+
+def reverse_translation(dictionary, number_of_seq, seq, variants=0):
+        res = ""
+        for i in seq:
+            res += dictionary[i][variants]
+        res_dna = reverse_trascription(res)
+        if "A" in res_dna or "T" in res_dna or "C" in res_dna or "G" in res_dna:
+            print(f'Sequence {number_of_seq+1}: {res_dna}')
+
+
+seqs = ["MTEQQWNFAG", "IEAAASAIQG", "NVTSIHSLLD", "EGKQSLTKLA", "AAWGGSGSEA"]
+
+amino_acids_human = {
+    "A": ["GCC", "--G", "--A", "--U", "---", "---"],
+    "C": ["UGC", "--U", "---", "---", "---", "---"],
+    "D": ["GAC", "--U", "---", "---", "---", "---"],
+    "E": ["GAG", "--A", "---", "---", "---", "---"],
+    "F": ["UUC", "--U", "---", "---", "---", "---"],
+    "G": ["GGC", "--G", "--A", "--U", "---", "---"],
+    "H": ["CAC", "--U", "---", "---", "---", "---"],
+    "I": ["AUC", "--U", "--A", "---", "---", "---"],
+    "K": ["AAG", "--A", "---", "---", "---", "---"],
+    "L": ["CUG", "--C", "--A", "--U", "U-G", "U-A"],
+    "M": ["AUG", "---", "---", "---", "---", "---"],
+    "N": ["AAC", "--U", "---", "---", "---", "---"],
+    "P": ["CCC", "--G", "--A", "--U", "---", "---"],
+    "Q": ["CAG", "--A", "---", "---", "---", "---"],
+    "R": ["AGG", "--A", "C-C", "C-U", "C-G", "C-A"],
+    "S": ["AGC", "--U", "U-C", "U-U", "U-G", "U-A"],
+    "T": ["ACC", "--G", "--A", "--U", "---", "---"],
+    "V": ["GUG", "--C", "--A", "--U", "---", "---"],
+    "W": ["UGG", "---", "---", "---", "---", "---"],
+    "Y": ["UAC", "--U", "---", "---", "---", "---"]
+}
+
+amino_acids_ecoli = {
+    "A": ["GCG"],
+    "C": ["UGC"],
+    "D": ["GAU"],
+    "E": ["GAA"],
+    "F": ["UUU"],
+    "G": ["GGC"],
+    "H": ["CAU"],
+    "I": ["AUU"],
+    "K": ["AAA"],
+    "L": ["CUG"],
+    "M": ["AUG"],
+    "N": ["AAC"],
+    "P": ["CCG"],
+    "Q": ["CAG"],
+    "R": ["CGU"],
+    "S": ["AGC"],
+    "T": ["ACC"],
+    "V": ["GUU"],
+    "W": ["UGG"],
+    "Y": ["UAU"]
+}
+
+
+print("Для E. Coli:")
+for n, seq in enumerate(seqs):
+    reverse_translation(amino_acids_ecoli, n, seq)
+
+print()
+print("Для людини:")
+for n, seq in enumerate(seqs):
+    for variants in range(6):
+        reverse_translation(amino_acids_human, n, seq, variants)
+    print()
