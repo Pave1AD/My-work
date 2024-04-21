@@ -1,0 +1,50 @@
+from dataclasses import dataclass, field
+
+@dataclass
+class Promo:
+    code: int
+    prom_disc: int
+    list_of_products: list[str] = None  
+
+        
+@dataclass
+class Product:
+    name: str
+    price: int = field(repr=False)
+
+        
+class Cart:
+    def __init__(self):
+        self.cart=[]
+        self.discount = 0
+    
+    def apply_promo(self, code):
+        for promo in ACTIVE_PROMO:
+            if promo.code == code: 
+                if promo.list_of_products is None:
+                    self.discount = promo.prom_disc
+                else:
+                    for discount_product in promo.list_of_products:
+                        for product in self.cart:
+                            if product.name == discount_product.name:
+                                product.price = product.price*((1-promo.prom_disc/100))
+                                break
+                print(f"Промокод {code} успешно применился")        
+                return
+        print(f"Промокода {code} не существует")    
+    
+    def add_product(self, product, number:int=1):
+        for i in range(number):
+            self.cart.append(product)
+
+    def get_total(self):
+        return sum(i.price for i in self.cart)*((1-self.discount/100))
+
+    def apply_discount(self, value):
+        if isinstance(value, int) and not 0<=value<=100:
+            raise ValueError('Неправильное значение скидки')
+        self.discount = value
+
+
+
+
