@@ -1,0 +1,8 @@
+import datetime
+import os
+
+d = datetime.datetime(year=2018, month=1, day=1)
+
+while d != datetime.datetime(year=2026,month=1,day=1):
+    os.makedirs(f"sales_{d.year}/{d.strftime('%B')}_{d.year-2000}/{d.strftime('%d_%b')}_{d.year-2000}")
+    d += datetime.timedelta(days=1)
