@@ -1,0 +1,439 @@
+#include <iostream>
+#include <windows.h>
+#include <time.h>
+#include <conio.h>
+using namespace std;
+#define KEY_ARROW_UP 72
+#define KEY_ARROW_RIGHT 77
+#define KEY_ARROW_DOWN 80
+#define KEY_ARROW_LEFT 75
+#define KEY_ENTER 13
+#define KEY_ESC 27
+#define KEY_SPACE 30
+const int buffer_w = 75, buffer_h = 22;
+const int field_w = 24, field_h = 22;
+const int scr_w = field_w * 2, scr_h = field_h;
+const char mv_cell = 219, fx_cell = 178;
+typedef char Screen_fld[scr_h][scr_w];
+typedef char Game_fld[field_h][field_w];
+const int ptr_w = 4, ptr_h = 4;
+typedef char Pattern[ptr_h][ptr_w];
+HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+char* tpsTetramino[] = {
+(char*)".....**..**.....",// 0
+(char*)"....****........",// I
+(char*)"....***..*......",// T
+(char*)".....***.*......",// L1
+(char*)".....***...*....",// L2
+(char*)".....**.**......",// S1
+(char*)".....**...**...." };// S2
+const int Amounttps = sizeof(tpsTetramino) / sizeof(tpsTetramino[0]);
+void Border();
+void Cycle();
+void Cursos_coord(int x, int y)
+{
+    COORD coord;
+    coord.X = x;
+    coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+class Screen {
+public:
+    Screen_fld screen;
+    Screen() { memset(screen, ' ', sizeof(screen)); }
+    void Area() {
+        for (int i = 1; i < field_h - 1; i++) {
+            for (int j = 2; j < field_w - 2; j++) {
+                Cursos_coord(j, i);
+                cout << screen[i][j];
+            }
+        }
+    }
+};
+class Field {
+public:
+    Game_fld map;
+    Field() { Renew(); }
+    void Renew() {memset(map, ' ', sizeof(map));}
+    void Input(Screen_fld& screen) {
+        for (int i = 0; i < field_h; i++)
+            for (int j = 0; j < field_w; j++)
+                screen[i][j * 2] = screen[i][j * 2 + 1] = map[i][j];
+    }
+    void Removing_line(int& value_score) {
+        for (int j = field_h - 1; j >= 1; j--) {
+            static bool ROW;
+            ROW = true;
+            for (int i = 1; i < field_w - 13; i++)
+                if (map[j][i] != fx_cell)
+                    ROW = false;
+            if (ROW)
+            {
+                for (int y = j; y >= 1; y--) {
+                    memcpy(map[y], map[y - 1], sizeof(map[y]));
+                }
+                value_score += 4;
+                return;
+            }
+        }
+    }
+};
+class Tetramino {
+    int x, y;
+    int trn;
+    int Numbofcell;
+    Pattern type;
+    COORD arr[ptr_w * ptr_h];
+    Field* fld = 0;
+    void NewCoord() {
+        int q, p;
+        Numbofcell = 0;
+        for (int i = 0; i < ptr_h; i++)
+            for (int j = 0; j < ptr_w; j++)
+                if (type[i][j] == '*')
+                {
+                    if (trn == 0) p = x + j, q = y + i;
+                    if (trn == 1) p = x + (ptr_w - i - 1), q = y + j;
+                    if (trn == 2) p = x + (ptr_h - j - 1), q = y + (ptr_w - i - 1);
+                    if (trn == 3) p = x + i, q = y + (ptr_h - j - 1);
+                    arr[Numbofcell] = COORD{ (short)p, (short)q };
+                    Numbofcell++;
+                }
+    }
+public:
+    Tetramino() {memset(this, 0, sizeof(*this));}
+    void SetField(Field* _fld) { fld = _fld; }
+    void SetShape(const char* type_) {
+        memcpy(type, type_, sizeof(type));
+    }
+    void SetPosition(int x_, int y_) {
+        x = x_;
+        y = y_;
+        NewCoord();
+    }
+    char GetTurn() {
+        return trn;
+    }
+    void SetTurn(int Ntrn) {
+        int Otrn = trn;
+        trn = (Ntrn > 3 ? 0 : (Ntrn < 0 ? 3 : Ntrn));
+        int chck = Check();
+        if (chck == 0)return;
+        if (chck == 1) {
+            int X = x;
+            int k = (x > (field_w / 2) ? -1 : +1);
+            for (int i = 1; i < 3; i++)
+            {
+                x += k;
+                if (Check() == 0)return;
+            }
+            x = X;
+        }
+        trn = Otrn;
+        NewCoord();
+    }
+    void Puttoscreen(Screen_fld& screen) {
+        for (int i = 0; i < Numbofcell; i++)
+            screen[arr[i].Y][arr[i].X * 2] = screen[arr[i].Y][arr[i].X * 2 + 1] = mv_cell;
+    }
+    void Puttofield(Game_fld& map) {
+        for (int i = 0; i < Numbofcell; i++)
+            map[arr[i].Y][arr[i].X] = fx_cell;
+    }
+    bool Motion(int dx, int dy) {
+        int  oldX = x, oldY = y;
+        SetPosition(x + dx, y + dy);
+        int chk = Check();
+        if (chk >= 1)
+        {
+            SetPosition(oldX, oldY);
+            if (chk == 2)
+                return false;
+        }
+        return true;
+    }
+    int Check() {
+        NewCoord();
+        for (int i = 0; i < Numbofcell; i++)
+            if (arr[i].X < 1 || arr[i].X >= field_w - 13)
+                return 1;
+        for (int i = 0; i < Numbofcell; i++)
+            if ((fld->map[arr[i].Y][arr[i].X] == fx_cell) || (arr[i].Y >= field_h - 1))
+                return 2;
+        return 0;
+    }
+    void DrawNext() {
+        Cursos_coord(33, 12);
+        cout << "Next Figure:";
+        int k = 13;
+        Cursos_coord(33, k);
+        for (int j = 0; j < ptr_w * 2; j++)
+        {
+            for (int i = 0; i < ptr_h; i++)
+            {
+                if (type[j][i] == '*') { cout << mv_cell << mv_cell; }
+                if (type[j][i] == '.') { cout << ' ' << ' '; }
+            }
+            Cursos_coord(33, ++k);
+        }
+    }
+};
+class Score {
+public:
+    int score = 0;
+    int best_score = 0;
+    Score() {
+        Result();
+    }
+    void Result() {
+        Cursos_coord(33, 9);
+        cout << "SCORE:" << score << endl;
+    }
+    void Best(int score) {
+        if (score >= best_score)best_score = score;
+        SetConsoleTextAttribute(handle, 9);
+        Cursos_coord(55, 15);
+        cout << "Your Best Score: " << best_score;
+        SetConsoleTextAttribute(handle, 15);
+    }
+};
+class Menu {
+public:
+    Menu() {
+    }
+    string Menuu[3] = { "Start Game", "Instruction", "Exit" };
+    void Call() {
+        SetConsoleTextAttribute(handle, 15);
+        Cursos_coord(5, 4);
+        cout << Menuu[0];
+        Cursos_coord(5, 8);
+        cout << Menuu[1];
+        Cursos_coord(5, 12);
+        cout << Menuu[2];
+    }
+    void Draw(int k, int y) {
+        Call();
+        Cursos_coord(5, y);
+        SetConsoleTextAttribute(handle, 10);
+        cout << Menuu[k];
+        SetConsoleTextAttribute(handle, 15);
+    }
+    void Instruction() {
+        system("CLS");
+        Border();
+        Call();
+        Cursos_coord(55, 10);
+        cout << "Instruction:";
+        Cursos_coord(55, 11);
+        cout << (char)30 << " " << (char)31 << " " << (char)16 << " " << (char)17 << " - game";
+        Cursos_coord(55, 12);
+        cout << "SPACE - pause";
+        Cursos_coord(55, 13);
+        cout << "ESC - exit";
+    }
+    void Over(int& score) {
+        SetConsoleTextAttribute(handle, 12);
+        Cursos_coord(55, 10);
+        cout << "GAME OVER! :(";
+        Cursos_coord(55, 11);
+        cout << "TRY AGAIN!";
+        Cursos_coord(55, 13);
+        cout << "Your Score: " << score;
+        SetConsoleTextAttribute(handle, 15);
+    }
+};
+class Process {
+    int index;
+    Screen scr;
+    Field fld;
+    Tetramino fgr;
+    Tetramino nxt_fgr;
+    Score sr;
+    Menu meenu;
+public:
+    Process() {
+        srand(time(NULL));
+        fgr.SetField(&fld);
+        index = rand() % Amounttps;
+        nxt_fgr.SetShape(tpsTetramino[index]);
+        fgr.SetShape(tpsTetramino[rand() % Amounttps]);
+        fgr.SetPosition(field_w / 2 - ptr_w - 4, 0);
+    }
+    void PlayerControl() {
+        static int trn = 0;
+        if (GetKeyState(VK_UP) < 0)trn += 1;
+        if (trn == 1) { fgr.SetTurn(fgr.GetTurn() + 1), trn++; }
+        if (GetKeyState(VK_UP) >= 0)trn = 0;
+
+        if (GetKeyState(VK_DOWN) < 0) fgr.Motion(0, 1);
+        if (GetKeyState(VK_LEFT) < 0) fgr.Motion(-1, 0);
+        if (GetKeyState(VK_RIGHT) < 0) fgr.Motion(1, 0);
+
+    }
+    int Falling() {
+        static int iteration = 0;
+        static int iteration2 = 0;
+        static int k = 10;
+        iteration2++;
+        iteration++;
+        if (iteration >= k)
+        {
+            if (!fgr.Motion(0, 1))
+            {
+                fgr.Puttofield(fld.map);
+                Replace(index);
+                fgr.SetPosition(field_w / 2 - ptr_w - 4, 0);
+                if (fgr.Check() > 0)
+                {
+                    fld.Renew();
+                    system("CLS");
+                    Border();
+                    GameOver(sr.score);
+                    sr.Best(sr.score);
+                    sr.score = 0;
+                    k = 7;
+                    return 0;
+                }
+
+            }
+            fld.Removing_line(sr.score);
+            if (iteration2 >= 310) k--, iteration2 = 0;
+            iteration = 0;
+        }
+        return 1;
+    }
+    void Replace(int& value_index) {
+        fgr.SetShape(tpsTetramino[value_index]);
+        index = rand() % Amounttps;
+        nxt_fgr.SetShape(tpsTetramino[index]);
+    }
+    void Display() {
+        sr.Result();
+        fld.Input(scr.screen);
+        nxt_fgr.DrawNext();
+        fgr.Puttoscreen(scr.screen);
+        scr.Area();
+    }
+    void PrintMenu() {
+        meenu.Call();
+    }
+    void Draw(int k, int y) {
+        meenu.Draw(k, y);
+    }
+    void Instruction() {
+        meenu.Instruction();
+    }
+    void GameOver(int& score)
+    {
+        meenu.Over(score);
+    }
+};
+void PrintTetris() {
+    string Tetris[7] = {
+    "   ======  +++++  ======   +==+   ++++++   ==== ",
+    "     ||    ||       ||    ||  ]]    ||    {(    ",
+    "     ||    +++++    ||    ||===     ||     ==== ",
+    "     ||    ||       ||    ||  ||    ||        )}",
+    "     ||    +++++    ||    ||  ||  ++++++   ==== ",
+    "                                                ",
+    "                           Yakov Arkhipov KA-12 " };
+    SetConsoleTextAttribute(handle, 10);
+    Cursos_coord(24, 0);
+    int k = 0;
+    for (int i = 0; i < 7; i++) {
+        cout << Tetris[i];
+        Cursos_coord(24, ++k);
+    }
+    SetConsoleTextAttribute(handle, 15);
+}
+void Border() {
+    PrintTetris();
+    for (int i = 1; i < field_w - 1; i++) {
+        Cursos_coord(i, 0);
+        cout << (unsigned char)461;
+        Cursos_coord(i, field_h - 1);
+        cout << (unsigned char)461;
+    }
+    for (int i = 1; i < field_h - 1; i++) {
+        Cursos_coord(0, i);
+        cout << (unsigned char)442;
+        Cursos_coord(0, i + 1);
+        cout << ' ';
+        Cursos_coord(field_w - 1, i);
+        cout << (unsigned char)442;
+        Cursos_coord(field_w - 2, i);
+        cout << ' ';
+    }
+    Cursos_coord(0, 0); cout << (unsigned char)457;
+    Cursos_coord(field_w - 1, 0); cout << (unsigned char)443;
+    Cursos_coord(0, field_h - 1); cout << (unsigned char)456;
+    Cursos_coord(field_w - 1, field_h - 1); cout << (unsigned char)444;
+}
+int StartGame(Process& admin) {
+    admin.PlayerControl();
+    if (!admin.Falling())return 0;
+    admin.Display();
+    Sleep(50);
+    if (GetKeyState(VK_SPACE) < 0) {
+        Cursos_coord(30, 20);
+        system("pause");
+        system("CLS");
+        Border();
+
+    }
+    if (GetKeyState(VK_ESCAPE) < 0)exit(0);
+    return 1;
+}
+Process admin;
+void Cycle() {
+    int l = 1;
+    int k = 0;
+    int y = 4;
+    char ch;
+    while (true)
+    {
+        ch = _getch();
+        switch (ch) {
+        case 72:
+            k--;
+            y -= 4;
+            k = (k < 0 ? 2 : k);
+            y = (y < 4 ? 12 : y);
+            admin.Draw(k, y);
+            break;
+        case 80:
+            k++;
+            y += 4;
+            k = (k > 2 ? 0 : k);
+            y = (y > 12 ? 4 : y);
+            admin.Draw(k, y);
+            break;
+        case 13:
+            if (k == 0) {
+                system("CLS");
+                Border();
+                while (true) {
+                    if (!StartGame(admin))break;
+                }
+            }
+            if (k == 1) admin.Instruction();
+            if (k == 2) exit(0);
+        }
+
+    }
+}
+int main() {
+    SetConsoleTitle(L"Tetris");
+    char comm[1000];
+    sprintf_s(comm, "mode con cols=%d lines=%d", buffer_w, buffer_h);
+    system(comm);
+    CONSOLE_CURSOR_INFO structCursorInfo;
+    GetConsoleCursorInfo(handle, &structCursorInfo);
+    structCursorInfo.bVisible = FALSE;
+    SetConsoleCursorInfo(handle, &structCursorInfo);
+    Border();
+    admin.PrintMenu();
+    Cycle();
+    return 0;
+}
+
